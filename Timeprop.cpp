@@ -29,20 +29,24 @@ void Timeprop::initialise( int cycleTime, int deadTime, unsigned char invert, fl
   m_maxUpdateInterval = maxUpdateInterval;
 
   m_dtoc = (float)deadTime/cycleTime;
-  m_opState = -1;   // current output state, initialise to illegal value to indicate unknown
+  m_opState = 0;
   setPower(m_fallbackPower, nowSecs);
 }
 
 /* set current power required 0:1, given power and current time in seconds */
 void Timeprop::setPower( float power, unsigned long nowSecs ) {
+  if (power < 0.0) {
+    power = 0.0;
+  } else if (power >= 1.0) {
+    power = 1.0;
+  }
   m_power = power;
   m_lastPowerUpdateTime = nowSecs;
 };
 
 /* called regularly to provide new output value */
-/* returns new o/p state 0, 1 or -1 to leave as is */
+/* returns new o/p state 0, 1 */
 int Timeprop::tick( unsigned long nowSecs) {
-  int answer = -1;
   int newState;
   float wave;
   float direction;
@@ -85,10 +89,6 @@ int Timeprop::tick( unsigned long nowSecs) {
           newState = m_opState;
       }
   }
-  if (newState != m_opState) {
-    m_opState = newState;
-    answer = m_invert ? (1-m_opState) : m_opState;
-  }
-  // else leave at -1 for no change
-  return answer;
+  m_opState = newState;
+  return m_invert ? (1-m_opState) : m_opState;
 }
